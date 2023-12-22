@@ -25,13 +25,28 @@ document.querySelectorAll('.monotile').forEach(tile => {
 
         // let innerImg = clonedTile.querySelector('img');
 
+        console.log(event);
+
+        // const pix = document.createElement('div');
+        // pix.style.width = "10px";
+        // pix.style.height = "10px";
+        // pix.style.backgroundColor = "green";
+        // pix.style.position = "absolute";
+        // pix.style.top = `${event.clientY + 10}px`;
+        // pix.style.left = `${event.clientX + 10}px`;
+        // document.body.append(pix);
+
+
 
         document.body.append(clonedTile)
         const currentStyle = getComputedStyle(dragged);
         const width = parseInt(currentStyle["width"].split("px")[0]);
         const height = parseInt(currentStyle["height"].split("px")[0]);
 
-        event.dataTransfer.setDragImage(clonedTile, width / 2, height / 2);
+
+        // console.log(pix);
+
+        event.dataTransfer.setDragImage(clonedTile, height / 2, width / 2);
     })
 
     tile.addEventListener('dragover', (e) => {
@@ -56,7 +71,7 @@ document.querySelector('body').addEventListener('keydown', (e) => {
         } else {
             currentRot = 0;
         }
-        elem.style.setProperty('rotate', `${currentRot + 60}deg`)
+        elem.style.setProperty('rotate', `${currentRot + 30}deg`)
     }
 })
 
@@ -87,7 +102,42 @@ function handleDropEvent(dragged, evt) {
     // dragged
     const width = parseInt(currentStyle["width"].split("px")[0]);
     const height = parseInt(currentStyle["height"].split("px")[0]);
-    console.log(width, height)
-    dragged.style.setProperty('left', `${evt.x - width / 2}px`)
-    dragged.style.setProperty('top', `${evt.y - height / 2}px`)
+    console.log(width, height, imgStyle['rotate']);
+
+
+    // Multiples of 90 -> 0 Rotation
+    // Multiples of 60 -> 20 30 Rotation
+    // Mutliples of 30 -> 35 15 Rotation
+    
+
+    const rotationAddition = {
+        0: { left: 0, top: 0 },
+        30: { left: 35, top: 15 },
+        60: { left: 20, top: 30 },
+        90: { left: 0, top: 0 },
+        120: { left: 20, top: 30 },
+        150: { left: 35, top: 15 },
+        180: { left: 0, top: 0 },
+        210: { left: 35, top: 15 },
+        240: { left: 20, top: 30 },
+        270: { left: 0, top: 0 },
+        300: { left: 20, top: 60 },
+        330: { left: 35, top: 15 },
+        360: { left: 0, top: 0 }
+    }
+
+    let currentRot;
+    if (imgStyle['rotate'] !== 'none') {
+        currentRot = parseInt(imgStyle['rotate'].split("deg")[0]);
+    } else {
+        currentRot = 0;
+    }
+
+    currentRot = currentRot % 360;
+    console.log(currentRot)
+    console.log(rotationAddition[currentRot])
+    console.log(rotationAddition[currentRot]['left'], rotationAddition[currentRot]['top'])
+
+    dragged.style.setProperty('left', `${evt.clientX + rotationAddition[currentRot]['left'] - width / 2}px`)
+    dragged.style.setProperty('top', `${evt.clientY + rotationAddition[currentRot]['top'] - height / 2}px`)
 }

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matter Script</title>
+    <script src="https://cdn.jsdelivr.net/npm/pathseg@1.2.1/pathseg.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/poly-decomp@0.2.1/build/decomp.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.18.0/matter.min.js"></script>
+</head>
+
+<body>
+
+
+
+    <script>
+
+        const Composite = Matter.Composite;
+        const Svg = Matter.Svg;
+        const Common = Matter.Common;
+        const Vertices = Matter.Vertices;
+        const Bodies = Matter.Bodies;
+
+        const select = function (root, selector) {
+            return Array.prototype.slice.call(root.querySelectorAll(selector));
+        }
+
+        const loadSvg = function (url) {
+            return fetch(url)
+                .then(function (response) { return response.text(); })
+                .then(function (raw) { return (new window.DOMParser()).parseFromString(raw, 'image/svg+xml'); });
+        };
+
+
+
+
+
+
+        const engine = Matter.Engine.create();
+        const render = Matter.Render.create({
+            element: document.body,
+            engine: engine,
+            options: {
+                width: 560,
+                height: 800,
+                background: '#f8f9fa',
+                wireframes: false
+            }
+        })
+        Matter.Render.run(render);
+        const runner = Matter.Runner.create();
+        Matter.Runner.run(runner, engine);
+
+        const world = engine.world;
+
+
+        
+
+
+        loadSvg('./einstein_path.svg').then(function (root) {
+            console.log(root);
+
+
+            for (let i = 0; i < 20; i++) {
+                let color = Common.choose(['#f19648', '#f5d259', '#f55a3c', '#063e7b', '#ececd1']);
+                console.log("Color", color)
+
+                let vertexSets = select(root, 'path')
+                    .map(function (path) {
+                        console.log(path)
+                        return Vertices.scale(Svg.pathToVertices(path, 30), 0.4, 0.4);
+                    });
+
+
+                Composite.add(world, Bodies.fromVertices(400, 80, vertexSets, {
+                    render: {
+                        fillStyle: color,
+                        strokeStyle: color,
+                        lineWidth: 1
+                    }
+                }, true));
+            }
+
+
+
+        })
+
+
+
+
+
+
+
+
+        function wall(x, y, width, height) {
+            return Matter.Bodies.rectangle(x, y, width, height, {
+                isStatic: true,
+                render: {
+                    fillStyle: '#868e96'
+                }
+            })
+
+        }
+
+        const ball = Matter.Bodies.circle(400, 100, 50);
+        Matter.World.add(engine.world, ball);
+        Matter.World.add(engine.world, [
+            wall(280, 0, 560, 20),
+            wall(280, 800, 560, 20),
+            wall(0, 400, 20, 800),
+            wall(560, 400, 20, 800)
+        ])
+
+    </script>
+</body>
+
+</html>

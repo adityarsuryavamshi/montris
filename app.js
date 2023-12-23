@@ -30,10 +30,10 @@ async function get_monotile_body(x, y, options) {
         }
     });
 
-    monotile.friction = 1;
-    monotile.restitution = 0;
-    monotile.inertia = Infinity; // https://www.phind.com/search?cache=mxn73w77rx4qwljazuaaew3u
-    monotile.inverseInertia = 0;
+    // monotile.friction = 1;
+    // monotile.restitution = 0;
+    // monotile.inertia = Infinity; // https://www.phind.com/search?cache=mxn73w77rx4qwljazuaaew3u
+    // monotile.inverseInertia = 0;
 
     if (options.isStatic) {
 
@@ -55,7 +55,7 @@ const GAME_HEIGHT = 1000
 
 
 const engine = Matter.Engine.create({
-    gravity: { x: 0 }
+    gravity: { x: 0, y:1 }
 });
 const render = Matter.Render.create({
     element: document.querySelector('#game-screen'),
@@ -118,8 +118,24 @@ const detector = Matter.Detector.create({
 
 World.add(world, monotile1);
 
+document.querySelector('canvas').addEventListener('mousemove', (e) => {
+    get_monotile_body(e.clientX, e.clientY, {
+        color: getRandomColor(),
+        flip: Math.random() < 0.8 ? false : true
+    })
+    .then(tile => {
+        Body.setAngle(tile, Math.random()*Math.PI*2)
+        const previousBodies = detector.bodies;
+        Matter.Detector.clear(detector)
+        Matter.Detector.setBodies(detector, [...previousBodies, tile])
+        return tile
+    })
+    .then(tile => World.add(world, tile));
+})
+
 setInterval(() => {
     Matter.Engine.update(engine, 1000 / 60);
+    // Matter.Collision.create(monotile1, tiles[7]);
     console.log(Matter.Detector.collisions(detector));
     // console.log(Matter.Collision.collides(monotile1, tiles[4]));
     // console.log(chainedWallComp);

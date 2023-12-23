@@ -10,9 +10,11 @@ const Bodies = Matter.Bodies;
 const Body = Matter.Body;
 
 
+
+
 async function get_monotile_body(x, y, options) {
 
-    const rawSvg = await fetch('./img/einstein_path.svg')
+    const rawSvg = await fetch(options?.url ?? './img/einstein.svg')
         .then(res => res.text());
 
     const parsedSvg = (new DOMParser()).parseFromString(rawSvg, 'image/svg+xml');
@@ -31,7 +33,7 @@ async function get_monotile_body(x, y, options) {
     });
 
     monotile.friction = 1;
-    monotile.restitution = 0;
+    monotile.restitution = 0.5;
     monotile.inertia = Infinity; // https://www.phind.com/search?cache=mxn73w77rx4qwljazuaaew3u
     monotile.inverseInertia = 0;
 
@@ -68,8 +70,7 @@ const render = Matter.Render.create({
     }
 })
 Matter.Render.run(render);
-// const runner = Matter.Runner.create();
-// Matter.Runner.run(runner, engine);
+
 
 const world = engine.world;
 
@@ -86,22 +87,28 @@ function getRandomColor() {
 }
 
 
-const tiles = []
-for (let i = 0; i < 15; i++) {
-    const tile = await get_monotile_body((94 * i), GAME_HEIGHT, { isStatic: true, color: getRandomColor() });
-    Body.setAngle(tile, Math.PI / 2);
-    tiles.push(tile)
-}
+// const tiles = []
+// for (let i = 0; i < 15; i++) {
+//     const tile = await get_monotile_body((94 * i), GAME_HEIGHT, { isStatic: true, color: getRandomColor() });
+//     Body.setAngle(tile, Math.PI / 2);
+//     tiles.push(tile)
+// }
 
-// console.log(tiles);
+// // console.log(tiles);
 
-const wallComp = Composite.create({
-    bodies: tiles
-});
+// const wallComp = Composite.create({
+//     bodies: tiles
+// });
 
-const chainedWallComp = Matter.Composites.chain(wallComp, 0, 0, 0, 0, { stiffness: 1 });
-chainedWallComp.constraints.map(c => c.render.visible = false);
-World.add(world, chainedWallComp);
+// const chainedWallComp = Matter.Composites.chain(wallComp, 0, 0, 0, 0, { stiffness: 1 });
+// chainedWallComp.constraints.map(c => c.render.visible = false);
+const wall = await get_monotile_body(0, GAME_HEIGHT, {
+    url: './img/wall.svg',
+    isStatic: true,
+    color: getRandomColor()
+})
+
+World.add(world, wall);
 
 
 // console.log(monotile1);
@@ -113,9 +120,9 @@ const monotile1 = await get_monotile_body(250, 80, {
     // isStatic: true
 })
 
-const detector = Matter.Detector.create({
-    bodies: [...tiles, monotile1]
-})
+// const detector = Matter.Detector.create({
+//     bodies: [...tiles, monotile1]
+// })
 
 World.add(world, monotile1);
 
@@ -136,7 +143,7 @@ document.querySelector('body').addEventListener('keydown', (e) => {
         Body.setAngle(currentlyFallingTile, currentlyFallingTile.angle + 0.1)
     } else if (e.key == 'ArrowDown') {
         Body.setAngle(currentlyFallingTile, currentlyFallingTile.angle - 0.1)
-    } else if (e.key === 'f'){
+    } else if (e.key === 'f') {
         Body.scale(currentlyFallingTile, -1, 1)
     }
 })
@@ -152,21 +159,24 @@ document.querySelector('body').addEventListener('keydown', (e) => {
 // World.add(world, mouseConstraint);
 
 function generateAndRandomAddTile(e) {
+
+
     get_monotile_body(e.clientX, e.clientY, {
+        url: Common.choose(['./img/meta_tile_1.svg', './img/meta_tile_2.svg', './img/meta_tile_3.svg', './img/einstein.svg']),
         color: getRandomColor(),
         flip: Math.random() < 0.8 ? false : true
     }).then(tile => {
         Body.setAngle(tile, Math.random() * Math.PI * 2)
-        const previousBodies = detector.bodies;
-        Matter.Detector.clear(detector)
-        Matter.Detector.setBodies(detector, [...previousBodies, tile])
+        // const previousBodies = detector.bodies;
+        // Matter.Detector.clear(detector)
+        // Matter.Detector.setBodies(detector, [...previousBodies, tile])
         currentlyFallingTile = tile;
         return tile
     }).then(tile => World.add(world, tile));
 
     setTimeout(() => {
         generateAndRandomAddTile(e)
-    }, 5000)
+    }, 12000)
 
 }
 

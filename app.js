@@ -15,6 +15,7 @@ const Vertices = Matter.Vertices;
 const Bodies = Matter.Bodies;
 const Body = Matter.Body;
 
+
 async function get_monotile_body(x, y, options) {
 
     const rawSvg = await fetch('./img/einstein_path.svg')
@@ -36,6 +37,9 @@ async function get_monotile_body(x, y, options) {
 
     monotile.friction = 1;
     monotile.restitution = 0;
+    monotile.inertia = Infinity; // https://www.phind.com/search?cache=mxn73w77rx4qwljazuaaew3u
+    monotile.inverseInertia = 0;
+    // monotile.angle = 30;
 
 
     if (options.flip) {
@@ -51,7 +55,9 @@ const GAME_WIDTH = 700
 const GAME_HEIGHT = 1000
 
 
-const engine = Matter.Engine.create();
+const engine = Matter.Engine.create({
+    gravity: { x: 0, y: 1 }
+});
 const render = Matter.Render.create({
     element: document.querySelector('#game-screen'),
     engine: engine,
@@ -69,21 +75,65 @@ Matter.Runner.run(runner, engine);
 const world = engine.world;
 
 
-// const monotile1 = await get_monotile_body(400, 80, {
-//     color: 'green'
+const monotile1 = await get_monotile_body(200, 80, {
+    color: 'green'
+})
+
+
+
+const monotile2 = await get_monotile_body(250, 80, {
+    color: 'blue'
+    // flip: true
+})
+
+
+
+
+Body.setAngle(monotile1, Math.PI / 2);
+// monotile1.friction = 1;
+// Body.setStatic(monotile1, true);
+Body.setAngle(monotile2, Math.PI / 2);
+
+const comp = Composite.create({
+    bodies: [monotile1, monotile2]
+});
+const chainedComp = Matter.Composites.chain(comp, 0, 0, 0, 0, { stiffness: 1 });
+chainedComp.constraints.forEach(c => c.render.visible = false);
+
+const constraint = Constraint.create({
+    bodyA: monotile1,
+    bodyB: monotile2,
+    stiffness: 1,
+    // length: 0
+})
+// Body.setStatic(monotile2, true);
+
+// Body.setParts(monotile1, [monotile2]);
+
+// const comp = Body.create({
+//     parts: [monotile1, monotile2]
 // })
 
-// const monotile2 = await get_monotile_body(500, 90, {
-//     color: 'blue',
-//     flip: true
+// monotile2.angle = 30;
+World.add(world, chainedComp);;
+// World.add(world, [monotile1, monotile2, constraint]);
+// World.add(world, monotile2);
+
+// World.add(world, Body.create({
+//     parts: [monotile1, monotile2]
+// }))
+
+// const compoundBody = Body.create({
+//     parts: [monotile1, monotile2]
+// });
+
+
+
+// Composite.create({
+//     bodies: [monotile1, monotile2]
 // })
 
-// const constraint = Constraint.create({
-//     bodyA: monotile1,
-//     bodyB: monotile2,
-//     stiffness: 0.2
-// })
-
+// World.add(world, [monotile1, monotile2, constraint]);
 
 // Composite.add(world, [Body.create({parts: [monotile1, monotile2]}), constraint]);
 
@@ -93,15 +143,15 @@ const world = engine.world;
 
 // Composite.add(world, compoundBody);
 
-for (let i = 0; i < 10; i++) {
-    const body = await get_monotile_body(400, 80, {
-        color: i % 5 == 0 ? 'blue' : 'green',
-        flip: i % 5 == 0 ? true : false
-    });
-    console.log(body);
-    World.add(world, body);
-    // Composite.add(world, body)
-}
+// for (let i = 0; i < 10; i++) {
+//     const body = await get_monotile_body(400, 80, {
+//         color: i % 5 == 0 ? 'blue' : 'green',
+//         flip: i % 5 == 0 ? true : false
+//     });
+//     console.log(body);
+//     World.add(world, body);
+//     // Composite.add(world, body)
+// }
 
 
 

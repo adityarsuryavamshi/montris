@@ -1,143 +1,122 @@
-// document.querySelectorAll('img').forEach(img => {
-//     img.addEventListener('drop', (d) => {
-//         console.log(d)
-//         img.setAttribute("style", `left:${d.clientX}px;top:${d.clientY}px`)
-//     })
+// import { Composite, Svg, Common, Vertices, Bodies, Body } from "./node_modules/matter-js/build/matter.js";
+
+// const { World } = require("matter-js");
+
+// const { Constraint } = require("matter-js");
+
+// import Matter from "matter-js";
+
+const World = Matter.World;
+const Constraint = Matter.Constraint;
+const Composite = Matter.Composite;
+const Svg = Matter.Svg;
+const Common = Matter.Common;
+const Vertices = Matter.Vertices;
+const Bodies = Matter.Bodies;
+const Body = Matter.Body;
+
+async function get_monotile_body(x, y, options) {
+
+    const rawSvg = await fetch('./img/einstein_path.svg')
+        .then(res => res.text());
+
+    const parsedSvg = (new DOMParser()).parseFromString(rawSvg, 'image/svg+xml');
+    const svgPath = Array.prototype.slice.call(parsedSvg.querySelectorAll('path'));
+    const vertexSet = svgPath.map(path => Svg.pathToVertices(path));
+
+    const scaledVertexSet = vertexSet.map(v => Vertices.scale(v, 0.3, 0.3));
+
+    const monotile = Bodies.fromVertices(x, y, scaledVertexSet, {
+        render: {
+            fillStyle: options.color,
+            strokeStyle: options.color,
+            lineWidth: 1
+        }
+    });
+
+    monotile.friction = 1;
+    monotile.restitution = 0;
+
+
+    if (options.flip) {
+        Body.scale(monotile, -1, 1)
+    }
+    console.log(monotile);
+    return monotile
+    // Body.scale(), -1, 1)
+}
+
+
+const GAME_WIDTH = 700
+const GAME_HEIGHT = 1000
+
+
+const engine = Matter.Engine.create();
+const render = Matter.Render.create({
+    element: document.querySelector('#game-screen'),
+    engine: engine,
+    options: {
+        width: GAME_WIDTH,
+        height: GAME_HEIGHT,
+        background: '#f8f9fa',
+        wireframes: false
+    }
+})
+Matter.Render.run(render);
+const runner = Matter.Runner.create();
+Matter.Runner.run(runner, engine);
+
+const world = engine.world;
+
+
+// const monotile1 = await get_monotile_body(400, 80, {
+//     color: 'green'
+// })
+
+// const monotile2 = await get_monotile_body(500, 90, {
+//     color: 'blue',
+//     flip: true
+// })
+
+// const constraint = Constraint.create({
+//     bodyA: monotile1,
+//     bodyB: monotile2,
+//     stiffness: 0.2
 // })
 
 
+// Composite.add(world, [Body.create({parts: [monotile1, monotile2]}), constraint]);
 
-let dragged = null;
+// const compoundBody = Body.create({
+//     parts: [monotile1, monotile2]
+// })
 
+// Composite.add(world, compoundBody);
 
-document.querySelectorAll('.monotile').forEach(tile => {
-    tile.addEventListener('dragstart', function (event) {
-
-
-        dragged = event.target;
-
-        //https://stackoverflow.com/a/43663691
-        let clonedTile = this.cloneNode(true);
-        clonedTile.setAttribute("id", "drag-img")
-        clonedTile.style.position = "absolute";
-        clonedTile.style.top = "0px";
-        clonedTile.style.left = "-10000px";
-
-        // let innerImg = clonedTile.querySelector('img');
-
-        console.log(event);
-
-        // const pix = document.createElement('div');
-        // pix.style.width = "10px";
-        // pix.style.height = "10px";
-        // pix.style.backgroundColor = "green";
-        // pix.style.position = "absolute";
-        // pix.style.top = `${event.clientY + 10}px`;
-        // pix.style.left = `${event.clientX + 10}px`;
-        // document.body.append(pix);
-
-
-
-        document.body.append(clonedTile)
-        const currentStyle = getComputedStyle(dragged);
-        const width = parseInt(currentStyle["width"].split("px")[0]);
-        const height = parseInt(currentStyle["height"].split("px")[0]);
-
-
-        // console.log(pix);
-
-        event.dataTransfer.setDragImage(clonedTile, height / 2, width / 2);
-    })
-
-    tile.addEventListener('dragover', (e) => {
-        e.preventDefault();
-    })
-
-    tile.addEventListener('drop', (d) => {
-
-        handleDropEvent(dragged, d)
-    })
-})
-
-
-document.querySelector('body').addEventListener('keydown', (e) => {
-    console.log(e);
-    if (e.key === 'ArrowUp') {
-        const elem = dragged.querySelector('img')
-        const currentStyle = getComputedStyle(elem);
-        let currentRot;
-        if (currentStyle['rotate'] !== 'none') {
-            currentRot = parseInt(currentStyle['rotate'].split("deg")[0]);
-        } else {
-            currentRot = 0;
-        }
-        elem.style.setProperty('rotate', `${currentRot + 30}deg`)
-    }
-})
-
-
-document.querySelector('#dropzone').addEventListener('dragover', (d) => {
-    d.preventDefault();
-})
-
-document.querySelector('#dropzone').addEventListener('drop', (d) => {
-    console.log("Dropped on Dropzone", dragged)
-    handleDropEvent(dragged, d)
-})
-
-
-function handleDropEvent(dragged, evt) {
-
-    evt.preventDefault();
-
-    document.querySelector('#drag-img').remove();
-
-
-    const currentStyle = getComputedStyle(dragged);
-    console.dir(dragged)
-
-    const imgElem = dragged.querySelector('img');
-    const imgStyle = getComputedStyle(imgElem);
-    dragged.querySelector('img').style.setProperty('rotate', imgStyle['rotate']);
-    // dragged
-    const width = parseInt(currentStyle["width"].split("px")[0]);
-    const height = parseInt(currentStyle["height"].split("px")[0]);
-    console.log(width, height, imgStyle['rotate']);
-
-
-    // Multiples of 90 -> 0 Rotation
-    // Multiples of 60 -> 20 30 Rotation
-    // Mutliples of 30 -> 35 15 Rotation
-    
-
-    const rotationAddition = {
-        0: { left: 0, top: 0 },
-        30: { left: 35, top: 15 },
-        60: { left: 20, top: 30 },
-        90: { left: 0, top: 0 },
-        120: { left: 20, top: 30 },
-        150: { left: 35, top: 15 },
-        180: { left: 0, top: 0 },
-        210: { left: 35, top: 15 },
-        240: { left: 20, top: 30 },
-        270: { left: 0, top: 0 },
-        300: { left: 20, top: 60 },
-        330: { left: 35, top: 15 },
-        360: { left: 0, top: 0 }
-    }
-
-    let currentRot;
-    if (imgStyle['rotate'] !== 'none') {
-        currentRot = parseInt(imgStyle['rotate'].split("deg")[0]);
-    } else {
-        currentRot = 0;
-    }
-
-    currentRot = currentRot % 360;
-    console.log(currentRot)
-    console.log(rotationAddition[currentRot])
-    console.log(rotationAddition[currentRot]['left'], rotationAddition[currentRot]['top'])
-
-    dragged.style.setProperty('left', `${evt.clientX + rotationAddition[currentRot]['left'] - width / 2}px`)
-    dragged.style.setProperty('top', `${evt.clientY + rotationAddition[currentRot]['top'] - height / 2}px`)
+for (let i = 0; i < 10; i++) {
+    const body = await get_monotile_body(400, 80, {
+        color: i % 5 == 0 ? 'blue' : 'green',
+        flip: i % 5 == 0 ? true : false
+    });
+    console.log(body);
+    World.add(world, body);
+    // Composite.add(world, body)
 }
+
+
+
+function wall(x, y, width, height) {
+    return Matter.Bodies.rectangle(x, y, width, height, {
+        isStatic: true,
+        render: {
+            fillStyle: '#868e96'
+        }
+    })
+
+}
+
+Matter.World.add(engine.world, wall(GAME_WIDTH / 2, GAME_HEIGHT - 10, GAME_WIDTH, 10))
+// wall(280, 0, 560, 20),
+// wall(280, 800, 560, 20),
+// wall(560, 400, 20, 800)
+// )

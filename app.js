@@ -19,9 +19,9 @@ async function get_monotile_body(x, y, options) {
     const svgPath = Array.prototype.slice.call(parsedSvg.querySelectorAll('path'));
     const vertexSet = svgPath.map(path => Svg.pathToVertices(path));
 
-    const scaledVertexSet = vertexSet.map(v => Vertices.scale(v, 0.3, 0.3));
+    const scaledVertexSet = vertexSet.map(v => Vertices.scale(v, 0.5, 0.5));
 
-    console.log(options.color)
+    // console.log(options.color)
     const monotile = Bodies.fromVertices(x, y, scaledVertexSet, {
         render: {
             fillStyle: options.color,
@@ -30,10 +30,10 @@ async function get_monotile_body(x, y, options) {
         }
     });
 
-    // monotile.friction = 1;
-    // monotile.restitution = 0;
-    // monotile.inertia = Infinity; // https://www.phind.com/search?cache=mxn73w77rx4qwljazuaaew3u
-    // monotile.inverseInertia = 0;
+    monotile.friction = 1;
+    monotile.restitution = 0;
+    monotile.inertia = Infinity; // https://www.phind.com/search?cache=mxn73w77rx4qwljazuaaew3u
+    monotile.inverseInertia = 0;
 
     if (options.isStatic) {
 
@@ -45,7 +45,7 @@ async function get_monotile_body(x, y, options) {
     if (options.flip) {
         Body.scale(monotile, -1, 1)
     }
-    console.log(monotile);
+    // console.log(monotile);
     return monotile
 }
 
@@ -55,7 +55,7 @@ const GAME_HEIGHT = 1000
 
 
 const engine = Matter.Engine.create({
-    gravity: { x: 0, y:1 }
+    gravity: { x: 0, y: 0.1 }
 });
 const render = Matter.Render.create({
     element: document.querySelector('#game-screen'),
@@ -88,7 +88,7 @@ function getRandomColor() {
 
 const tiles = []
 for (let i = 0; i < 15; i++) {
-    const tile = await get_monotile_body((56 * i), GAME_HEIGHT, { isStatic: true, color: getRandomColor() });
+    const tile = await get_monotile_body((94 * i), GAME_HEIGHT, { isStatic: true, color: getRandomColor() });
     Body.setAngle(tile, Math.PI / 2);
     tiles.push(tile)
 }
@@ -109,7 +109,8 @@ World.add(world, chainedWallComp);
 
 const monotile1 = await get_monotile_body(250, 80, {
     color: 'green',
-    flip: true
+    flip: true,
+    // isStatic: true
 })
 
 const detector = Matter.Detector.create({
@@ -118,25 +119,67 @@ const detector = Matter.Detector.create({
 
 World.add(world, monotile1);
 
-document.querySelector('canvas').addEventListener('mousemove', (e) => {
+let currentlyFallingTile = null;
+
+document.querySelector('body').addEventListener('keydown', (e) => {
+    e.preventDefault();
+    console.log(e.key)
+    if (e.key === 'ArrowLeft') {
+
+        Body.setPosition(currentlyFallingTile, { x: currentlyFallingTile.position.x - 10, y: currentlyFallingTile.position.y })
+        // console.log(currentlyFallingTile);
+    } else if (e.key == 'ArrowRight') {
+        console.log("Blah")
+        Body.setPosition(currentlyFallingTile, { x: currentlyFallingTile.position.x + 10, y: currentlyFallingTile.position.y })
+    } else if (e.key == 'ArrowUp') {
+        console.log(currentlyFallingTile)
+        Body.setAngle(currentlyFallingTile, currentlyFallingTile.angle + 0.1)
+    } else if (e.key == 'ArrowDown') {
+        Body.setAngle(currentlyFallingTile, currentlyFallingTile.angle - 0.1)
+    } else if (e.key === 'f'){
+        Body.scale(currentlyFallingTile, -1, 1)
+    }
+})
+
+
+// const mouse = Matter.Mouse.create(document.querySelector('#game-screen'));
+// mouse.pixelRatio = window.devicePixelRatio;
+// const mouseConstraint = Matter.MouseConstraint.create(engine, {
+//     mouse: mouse
+// })
+
+// console.log(mouse);
+// World.add(world, mouseConstraint);
+
+function generateAndRandomAddTile(e) {
     get_monotile_body(e.clientX, e.clientY, {
         color: getRandomColor(),
         flip: Math.random() < 0.8 ? false : true
-    })
-    .then(tile => {
-        Body.setAngle(tile, Math.random()*Math.PI*2)
+    }).then(tile => {
+        Body.setAngle(tile, Math.random() * Math.PI * 2)
         const previousBodies = detector.bodies;
         Matter.Detector.clear(detector)
         Matter.Detector.setBodies(detector, [...previousBodies, tile])
+        currentlyFallingTile = tile;
         return tile
-    })
-    .then(tile => World.add(world, tile));
+    }).then(tile => World.add(world, tile));
+
+    setTimeout(() => {
+        generateAndRandomAddTile(e)
+    }, 5000)
+
+}
+
+document.querySelector('canvas').addEventListener('click', (e) => {
+    generateAndRandomAddTile(e);
 })
+
 
 setInterval(() => {
     Matter.Engine.update(engine, 1000 / 60);
+
     // Matter.Collision.create(monotile1, tiles[7]);
-    console.log(Matter.Detector.collisions(detector));
+    // console.log(Matter.Detector.collisions(detector));
     // console.log(Matter.Collision.collides(monotile1, tiles[4]));
     // console.log(chainedWallComp);
     // console.log(Matter.Collision.collides(monotile1, chainedWallComp));

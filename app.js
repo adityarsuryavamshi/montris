@@ -1,3 +1,4 @@
+// const { Engine } = require("matter-js");
 
 const World = Matter.World;
 const Constraint = Matter.Constraint;
@@ -67,14 +68,14 @@ const render = Matter.Render.create({
     }
 })
 Matter.Render.run(render);
-const runner = Matter.Runner.create();
-Matter.Runner.run(runner, engine);
+// const runner = Matter.Runner.create();
+// Matter.Runner.run(runner, engine);
 
 const world = engine.world;
 
 
 
-
+// https://stackoverflow.com/a/1484514
 function getRandomColor() {
     var letters = '0123456789ABCDEF';
     var color = '#';
@@ -111,7 +112,30 @@ const monotile1 = await get_monotile_body(250, 80, {
     flip: true
 })
 
+const detector = Matter.Detector.create({
+    bodies: [...tiles, monotile1]
+})
+
 World.add(world, monotile1);
+
+setInterval(() => {
+    Matter.Engine.update(engine, 1000 / 60);
+    console.log(Matter.Detector.collisions(detector));
+    // console.log(Matter.Collision.collides(monotile1, tiles[4]));
+    // console.log(chainedWallComp);
+    // console.log(Matter.Collision.collides(monotile1, chainedWallComp));
+
+    // const collisionRecords = []
+    // console.log(tiles);
+    // for (let i = 0; i < 15; i++) {
+    //     collisionRecords.push(Matter.Collision.collides(monotile1, tiles[i]))
+    // }
+    // console.log(collisionRecords);
+    // // const collided = collisionRecords.filter(c => c.collided);
+    // // console.log(collided);
+
+    // console.log()
+}, 1000 / 60)
 
 
 // const monotile2 = await get_monotile_body(256, 80, {

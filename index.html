@@ -10,14 +10,28 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.18.0/matter.min.js"></script>
     <style>
         body {
-            height: 100%;
-            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
         }
+
+
+        #game-screen {
+            display: grid;
+            place-items: center;
+        }
+
     </style>
 </head>
 
 <body>
     <div id="game-screen"></div>
+    <div id="game-controls">
+        <p> <b>Controls:</b> Use Up Arrow and Down Arrow to control the Angle (Each keypress changes the angle by 30<sup>&deg;</sup>) <br> Use Arrow Left and Right to move the tiles. <br> Use f to flip the tile</p>
+        
+    </div>
 
 
     <script type="module" src="app.js"></script>

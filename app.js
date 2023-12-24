@@ -1,5 +1,3 @@
-// const { Engine } = require("matter-js");
-
 const World = Matter.World;
 const Constraint = Matter.Constraint;
 const Composite = Matter.Composite;
@@ -11,7 +9,6 @@ const Body = Matter.Body;
 
 
 
-// https://mathigon.org/polypad#tangram
 async function get_monotile_body(x, y, options) {
 
     const rawSvg = await fetch(options?.url ?? './img/einstein.svg')
